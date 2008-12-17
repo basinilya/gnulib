@@ -7,7 +7,7 @@ dnl with or without modifications, as long as this notice is preserved.
 
 dnl Written by Eric Blake.
 
-# wchar.m4 serial 4
+# wchar.m4 serial 5
 
 AC_DEFUN([gl_WCHAR_H],
 [
@@ -45,8 +45,10 @@ AC_DEFUN([gl_WCHAR_MODULE_INDICATOR],
 
 AC_DEFUN([gl_WCHAR_H_DEFAULTS],
 [
+  GNULIB_BTOWC=0;   AC_SUBST([GNULIB_BTOWC])
   GNULIB_WCWIDTH=0; AC_SUBST([GNULIB_WCWIDTH])
   dnl Assume proper GNU behavior unless another module says otherwise.
+  HAVE_BTOWC=1;        AC_SUBST([HAVE_BTOWC])
   HAVE_DECL_WCWIDTH=1; AC_SUBST([HAVE_DECL_WCWIDTH])
   REPLACE_WCWIDTH=0;   AC_SUBST([REPLACE_WCWIDTH])
   WCHAR_H=

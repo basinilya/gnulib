@@ -53,6 +53,20 @@ extern "C" {
 #endif
 
 
+/* Convert a single-byte character to a wide character.  */
+#if @GNULIB_BTOWC@
+# if !@HAVE_BTOWC@
+extern wint_t btowc (int c);
+# endif
+#elif defined GNULIB_POSIXCHECK
+# undef btowc
+# define btowc(c) \
+    (GL_LINK_WARNING ("btowc is unportable - " \
+                      "use gnulib module btowc for portability"), \
+     btowc (c))
+#endif
+
+
 /* Return the number of screen columns needed for WC.  */
 #if @GNULIB_WCWIDTH@
 # if @REPLACE_WCWIDTH@
