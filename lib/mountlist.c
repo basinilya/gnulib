@@ -295,6 +295,61 @@ fstype_to_string (int t)
 }
 #endif /* MOUNTED_VMOUNT */
 
+#if __CYGWIN__
+# include <windows.h>
+
+/* Cygwin specific mount point information.  Cygwin uses the Windows drive
+   name as the fs_name, and system or user as the type.  Return true if the
+   name is a share (such as \\server\name), or if Windows confirms the drive
+   is mapped to a remote share.  Modify *pfs_type (which was malloc'd) to
+   add detail to the type learned from Windows.  */
+
+static bool
+cygremote (const char *fs_name, char **pfs_type)
+{
+  bool remote = true;
+  char *base_type = *pfs_type;
+  int base_size = strlen (base_type) + 1;
+  if (isalpha(fs_name[0]) && fs_name[1] == ':')
+    {
+      const char drive[3] = { fs_name[0], ':' };
+      const char *detail;
+      switch (GetDriveType (drive))
+	{
+	case DRIVE_NO_ROOT_DIR:
+	  detail = ",nodisk";
+	  break;
+	case DRIVE_REMOVABLE:
+	  detail = ",removable";
+	  remote = false;
+	  break;
+	case DRIVE_FIXED:
+	  detail = ",fixed";
+	  remote = false;
+	  break;
+	case DRIVE_REMOTE:
+	  detail = ",remote";
+	  break;
+	case DRIVE_CDROM:
+	  detail = ",cdrom";
+	  remote = false;
+	  break;
+	case DRIVE_RAMDISK:
+	  detail = ",ramdisk";
+	  remote = false;
+	  break;
+	default:
+	  detail = ",unknown";
+	}
+      *pfs_type = strcat (xrealloc (base_type, base_size + strlen (detail)),
+			  detail);
+    }
+  else if (fs_name[0] == '\\' && fs_name[1] == '\\')
+    *pfs_type = strcat (xrealloc (base_type,
+				  base_size + strlen (",shared")), ",shared");
+  return remote;
+}
+#endif /* __CYGWIN__ */
 
 #if defined MOUNTED_GETMNTENT1 || defined MOUNTED_GETMNTENT2
 
@@ -393,7 +448,11 @@ read_file_system_list (bool need_fs_type)
 	me->me_type = xstrdup (mnt->mnt_type);
 	me->me_type_malloced = 1;
 	me->me_dummy = ME_DUMMY (me->me_devname, me->me_type);
+#if __CYGWIN__
+	me->me_remote = cygremote (me->me_devname, &me->me_type);
+#else
 	me->me_remote = ME_REMOTE (me->me_devname, me->me_type);
+#endif
 	me->me_dev = dev_from_mount_options (mnt->mnt_opts);
 
 	/* Add to the linked list. */
